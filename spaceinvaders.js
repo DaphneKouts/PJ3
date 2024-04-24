@@ -9,7 +9,16 @@ canvas.style.backgroundColor = 'black';
 //make variables for the shoot and explode sounds
 let explosionSound = document.getElementById('explosionSound');
 let shootSound = document.getElementById('shootSound');
-
+//make a variable for the pause button in the bottom right corner
+let pauseButton = document.getElementById('pauseButton');
+/**
+ * Make a variable for the game states
+ * 1 = main menu
+ * 2 = play
+ * 3 = pause
+ * 4 = game over
+ */
+let state = 1; //this is the start state so it is at the main menu
 
 /**
  * Makes a space invader alien given x and y coordinates.
@@ -125,18 +134,24 @@ let shipLazers = [];
 let alienLazers = [];
 let ship;
 let redraw = true;
-let alienSpeed = 1;
+//let alienSpeed = 1;
 let totalAlienMovement = 0;
 let firingRate = 0.0005
+let score = 0;
+//make a constant and a cooldown variable for the lazer
+const reloadPeriod = 2500; //in milliseconds
+let lazerCooldown = 0;
 
 /**
  * this function makes a 5x11 grid of aliens that gets called whenever there are no aliens left to keep the game going
  */
 function countAliens(){
     //this is a loop to draw the actual aliens
-    for(let i = 10; i < 890; i+=80){
-        for(let j = 10; j < 220; j += 45){
-            aliens.push({x:i, y:j, width: 50, height: 40}); 
+    for(let i = 10; i < 651; i+=80){
+        for(let j = 10; j < 191; j += 45){
+            //console.log("x:" + i);
+            //console.log("y:" + j);
+            aliens.push({x:i, y:j, width: 50, height: 40, alienSpeed: 1, currPos: 0}); 
         }
     }
 }
@@ -160,111 +175,138 @@ countAliens();
 //console.log(aliens[40]);
 
 let draw = function(){
-//meed to clear everything
-context.clearRect(0,0,canvas.width,canvas.height);
-
-//actually draw the ship and the alien lazers
-ship = (makeShip(shipX,500));
-updateAlienLazers();
-
-//draw the aliens that go back and forth
-/**
-for(let i = 0; i < aliens.length; i++){
-    makeInvader(aliens[i].x, aliens[i].y);
-}
-*/
-
-// Update and draw the aliens
-for (let i = 0; i < aliens.length; i++) {
-    // Update alien position
-    aliens[i].x += alienSpeed;
-
-    // Draw the updated alien
-    makeInvader(aliens[i].x, aliens[i].y);
+//if the state is 1, we are at the main menu, and we are waiting for them to press the space bar to start the game
+if(state == 1){
+    context.clearRect(0,0,canvas.width,canvas.height);
+    context.fillStyle = "white";
+    context.font = "100px Arial";
+    context.fillText("Welcome to",225,300);
+    context.fillText("SPACE INVADERS", 75,400);
+    context.font = "50px Arial";
+    context.fillText("Press the P button to play!", 200,500);
+    context.font = "25px Arial";
+    context.fillText("Press the space bar to shoot and the arrow keys to move", 150, 550);
+    context.fillText("Press the pause button to pause",300,600);
 }
 
-// Add to total movement
-totalAlienMovement += alienSpeed;
-
-// Check if aliens reached the screen boundaries
-for (let i = 0; i < aliens.length; i++) {
-    if (aliens[i].x >= canvas.width - aliens[i].width) {
-        alienSpeed = -1*alienSpeed;
+if(state == 2){
+    //decrement the cooldown period
+    if(lazerCooldown > 0){
+        lazerCooldown -= 1000/60; //decrement it
     }
-    if (aliens[i].x <= 0) {
-        alienSpeed = -1*alienSpeed;
+
+    //meed to clear everything
+    context.clearRect(0,0,canvas.width,canvas.height);
+
+    //actually draw the ship and the alien lazers
+    ship = (makeShip(shipX,500));
+    updateAlienLazers();
+
+    //draw the aliens that go back and forth
+    /**
+    for(let i = 0; i < aliens.length; i++){
+        makeInvader(aliens[i].x, aliens[i].y);
     }
-}
+    */
 
+    // Update and draw the aliens
+    for (let i = 0; i < aliens.length; i++) {
+        // Update alien position
+        aliens[i].x += aliens[i].alienSpeed;
+        aliens[i].currPos += aliens[i].alienSpeed;
 
-//make a loop that goes through all the aliens and Shiplazers
-for (let i = 0; i < shipLazers.length; i++) {
-    const lazer = shipLazers[i];
-    for (let j = 0; j < aliens.length; j++) {
-        const alien = aliens[j];
-        if (alienCollision(lazer, alien)) {
-            console.log("hit");
-            shipLazers.splice(i,1);
-            aliens.splice(j,1);
+        // Draw the updated alien
+        makeInvader(aliens[i].x, aliens[i].y);
+    }
+
+    // Check if aliens reached the screen boundaries
+    for (let i = 0; i < aliens.length; i++) {
+        if (aliens[i].currPos > 300 || aliens[i].currPos < 0) {
+                aliens[i].alienSpeed = -1*aliens[i].alienSpeed;
         }
     }
-}
 
-//make another loop similar that goes through all the alienLazers and ship
-for(let i = 0; i < alienLazers.length; i++){
-    const lazer = alienLazers[i];
-    if(shipCollision(lazer,ship)){
-        console.log("hit");
-        lives--;
-        alienLazers.splice(i,1);
-        explosionSound.play();
+
+    //make a loop that goes through all the aliens and Shiplazers
+    for (let i = 0; i < shipLazers.length; i++) {
+        const lazer = shipLazers[i];
+        for (let j = 0; j < aliens.length; j++) {
+            const alien = aliens[j];
+            if (alienCollision(lazer, alien)) {
+                console.log("hit");
+                shipLazers.splice(i,1);
+                aliens.splice(j,1);
+                score += 10;
+            }
+        }
     }
+
+    //make another loop similar that goes through all the alienLazers and ship
+    for(let i = 0; i < alienLazers.length; i++){
+        const lazer = alienLazers[i];
+        if(shipCollision(lazer,ship)){
+            console.log("hit");
+            lives--;
+            alienLazers.splice(i,1);
+            explosionSound.play();
+        }
+    }
+
+    //draw the amount of lives
+    context.fillStyle = "white";
+    context.font = "20px Arial";
+    context.fillText("Lives: " + lives, 350, 600);
+    //draw the score
+    context.fillStyle = "white";
+    context.font = "20pz Arial";
+    context.fillText("Score: "+ score, 500,600);
+
+    //if the amount of aliens is 0, recall the countAliens
+    if(aliens.length == 0){
+        countAliens();
+        firingRate = firingRate * 1.5;
+        score += 1000;
+    }
+
+    // Update and draw the ship lasers
+    shipLazers.forEach(function(lazer) {
+        context.fillStyle = "blue";
+        context.fillRect(lazer.lazerX, lazer.lazerY - 5, 10, 10);
+        // Update the laser's position
+        lazer.lazerY -= 5; // Adjust the speed as needed
+    });
+
+    // Update and draw alien lasers
+    alienLazers.forEach(function(lazer) {
+        context.fillStyle = "green";
+        context.fillRect(lazer.lazerX,lazer.lazerY-5,10,10);
+        // Update the laser's position
+        lazer.lazerY += 5; // Adjust the speed as needed
+    });
+
+    // Remove lasers that have gone off-screen
+    shipLazers = shipLazers.filter(function(lazer) {
+        return lazer.lazerY > 0; // Only keep lasers that are still on-screen
+    });
+    alienLazers = alienLazers.filter(function(lazer){
+        return lazer.lazerY < 1000; //only keep lazers that are still on screen
+    });
+
+    //make an if statement about the lives, so that it won't redraw the frame if you lose
+    if(lives <= 0){
+        state = 4;
+    }
+
 }
 
-//draw the amount of lives
-context.fillStyle = "white";
-context.font = "20px Arial";
-context.fillText("Lives: " + lives, 350, 600);
-
-//if the amount of aliens is 0, recall the countAliens
-if(aliens.length == 0){
-    countAliens();
-    //make the alienSpeed and their firing rate go up
-    alienSpeed++;
-    firingRate = firingRate * 2;
-
+if(state == 3){
+    context.clearRect(0,0,canvas.width, canvas.height);
+    context.fillStyle = "white";
+    context.font = "100px Arial";
+    context.fillText("PAUSED", 200,500);
 }
 
-// Update and draw the ship lasers
-shipLazers.forEach(function(lazer) {
-    context.fillStyle = "blue";
-    context.fillRect(lazer.lazerX, lazer.lazerY - 5, 10, 10);
-    // Update the laser's position
-    lazer.lazerY -= 5; // Adjust the speed as needed
-});
-
- // Update and draw alien lasers
- alienLazers.forEach(function(lazer) {
-    context.fillStyle = "green";
-    context.fillRect(lazer.lazerX,lazer.lazerY-5,10,10);
-    // Update the laser's position
-    lazer.lazerY += 5; // Adjust the speed as needed
-});
-
-// Remove lasers that have gone off-screen
-shipLazers = shipLazers.filter(function(lazer) {
-    return lazer.lazerY > 0; // Only keep lasers that are still on-screen
-});
-alienLazers = alienLazers.filter(function(lazer){
-    return lazer.lazerY < 1000; //only keep lazers that are still on screen
-});
-
-//make an if statement about the lives, so that it won't redraw the frame if you lose
-if(lives <= 0){
-    redraw = false;
-}
-
-if(redraw)
+if(state < 4)
     window.requestAnimationFrame(draw); //request it and then request it again when it is outside
 else{
     //make the screen black and have text with game over and refresh to play again
@@ -275,6 +317,7 @@ else{
     context.fillStyle = "white";
     context.font = "50px Arial";
     context.fillText("Refresh to play again!",200,700);
+    context.fillText("Score: " + score, 200, 800);
 }
 }
 
@@ -284,10 +327,13 @@ if(redraw)
 //make a listener for the arrows and the space bar 
 document.addEventListener('keydown', function(event) {
     // Log the pressed key
-    if(event.key == " "){
+    if(event.key == " " && lazerCooldown <= 0){
         console.log("space");
         shipLazers.push({lazerX: shipX, lazerY: 500, length: 5});
         shootSound.play();
+
+        //reset the cooldown period
+        lazerCooldown = reloadPeriod;
     }
     if(event.key == "ArrowLeft"){
         console.log("left");
@@ -299,5 +345,21 @@ document.addEventListener('keydown', function(event) {
         if(shipX < 985) //make sure the ship stays in bounds
             shipX += 5;
     }
+    if(event.key == "p"){
+        if(state == 1){
+            state = 2;
+        }
+    }
 });
 
+//make a listener for the pause button to change the game state
+pauseButton.onclick = function(){
+    console.log("paused");
+    //need to set the state to paused
+    if(state == 2){
+        state = 3;
+    }
+    else if(state == 3){
+        state = 2;
+    }
+};
