@@ -11,6 +11,7 @@ let explosionSound = document.getElementById('explosionSound');
 let shootSound = document.getElementById('shootSound');
 //make a variable for the pause button in the bottom right corner
 let pauseButton = document.getElementById('pauseButton');
+let restartButton = document.getElementById('restartButton');
 /**
  * Make a variable for the game states
  * 1 = main menu
@@ -183,10 +184,10 @@ if(state == 1){
     context.fillText("Welcome to",225,300);
     context.fillText("SPACE INVADERS", 75,400);
     context.font = "50px Arial";
-    context.fillText("Press the P button to play!", 200,500);
+    context.fillText("Press the play button to play!", 180,500);
     context.font = "25px Arial";
-    context.fillText("Press the space bar to shoot and the arrow keys to move", 150, 550);
-    context.fillText("Press the pause button to pause",300,600);
+    context.fillText("Press the space bar to shoot and the arrow keys to move", 180, 550);
+    context.fillText("Press the pause button to pause and the restart button to restart",140,600);
 }
 
 if(state == 2){
@@ -345,11 +346,6 @@ document.addEventListener('keydown', function(event) {
         if(shipX < 985) //make sure the ship stays in bounds
             shipX += 5;
     }
-    if(event.key == "p"){
-        if(state == 1){
-            state = 2;
-        }
-    }
 });
 
 //make a listener for the pause button to change the game state
@@ -358,8 +354,19 @@ pauseButton.onclick = function(){
     //need to set the state to paused
     if(state == 2){
         state = 3;
+        pauseButton.textContent = "Resume";
     }
     else if(state == 3){
         state = 2;
+        pauseButton.textContent = "Pause";
     }
+    this.blur();
 };
+playButton.onclick = function(){
+    if(state == 1){
+        state = 2;
+    }
+}
+restartButton.onclick = function(){
+    location.reload();
+}

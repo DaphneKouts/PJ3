@@ -22,8 +22,21 @@
         }
         #pauseButton {
             position: absolute;
+            bottom: 10px; /* Adjusted bottom position */
+            left: 750px; /* Centered horizontally */
+            z-index: 1; /* Ensure button is above canvas */
+        }
+        #playButton {
+            position: absolute;
+            bottom: 10px; /* Adjusted bottom position */
+            left: 810px; /* Centered horizontally */
+            z-index: 1; /* Ensure button is above canvas */
+        }
+        #restartButton{
+            position: absolute;
             bottom: 10px;
-            right: 10px;
+            left: 850px;
+            z-index: 1;
         }
        
     </style>
@@ -38,8 +51,10 @@
     <!-- Audio elements for sound effects -->
     <audio id="shootSound" src="shoot.mp3"></audio>
     <audio id="explosionSound" src="explosion.mp3"></audio>
-    <!-- Pause button -->
+    <!-- Pause button and play button -->
     <button id="pauseButton">Pause </button>
+    <button id="playButton"> Play</button>
+    <button id="restartButton"> Restart</button>
     <script src="spaceinvaders.js"></script>
 </body>
 </html>
